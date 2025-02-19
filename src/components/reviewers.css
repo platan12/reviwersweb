@@ -12,12 +12,13 @@ body {
   
   /* Contenidor principal */
   div {
+    margin-top: 20px;
     background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
-    width: 500px;
+    width: 1000px;
   }
   
   /* Botó per afegir reviewer */
@@ -52,5 +53,58 @@ body {
     margin-top: 10px;
     padding: 10px;
     border-top: 1px solid #ddd;
+  }
+
+  h2 {
+    margin-top: 100px;
+    font-size: 50px;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+  }
+  
+  .pagination li {
+    display: inline-block;
+    margin: 0 5px;
+  }
+  
+  .pagination a {
+    text-decoration: none;
+    padding: 8px 12px;
+    border: 1px solid #007bff;
+    color: #007bff;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  .pagination a:hover {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .pagination .active a {
+    background-color: #0056b3;
+    color: white;
+    border-color: #0056b3;
+  }
+  
+  .delete-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .delete-button:hover {
+    background-color: #c82333;
   }
   
