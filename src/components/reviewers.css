@@ -99,9 +99,14 @@ body {
     border: none;
     padding: 10px 15px;
     margin-top: 10px;
+    margin-left: 10px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
+  }
+
+  .lastvideo-button {
+    margin-left: 10px;
   }
   
   .delete-button:hover {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, getDocs, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { YOUTUBE_API_KEY } from "../utils/apiKeys"; // 🔹 Importem la API Key
 import ReactPaginate from "react-paginate";
@@ -15,38 +15,55 @@ const Reviewers = () => {
   const [lastVideoIDChecked, setLastVideoIDChecked] = useState("");
   const [web, setWeb] = useState("");
   const [channelID, setChannelID] = useState("");
+  const [editingId, setEditingId] = useState(null); // 🔹 Per identificar si estem editant un reviewer
 
   useEffect(() => {
-    const fetchReviewers = async () => {
-      const querySnapshot = await getDocs(collection(db, "Reviewers"));
-      const reviewersList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setReviewers(reviewersList);
-    };
     fetchReviewers();
   }, []);
 
-  const handleAddReviewer = async () => {
-    try {
-      await addDoc(collection(db, "Reviewers"), {
-        Name: name,
-        AvatarURL: avatarURL,
-        LastVideoIDChecked: lastVideoIDChecked,
-        Web: web,
-        ChannelID: channelID, // 🔹 Guardem la Channel ID
-      });
+  const fetchReviewers = async () => {
+    const querySnapshot = await getDocs(collection(db, "Reviewers"));
+    const reviewersList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setReviewers(reviewersList);
+  };
 
-      alert("Reviewer afegit correctament!");
-      setName("");
-      setAvatarURL("");
-      setLastVideoIDChecked("");
-      setWeb("");
-      setChannelID(""); // 🔹 Netejar la Channel ID
+  const handleAddOrUpdateReviewer = async () => {
+    try {
+      if (editingId) {
+        
+        // 🔹 Actualitzar reviewer existent a Firebase
+        const reviewerRef = doc(db, "Reviewers", editingId);
+        await updateDoc(reviewerRef, {
+          Name: name,
+          AvatarURL: avatarURL,
+          LastVideoIDChecked: lastVideoIDChecked,
+          Web: web,
+          ChannelID: channelID,
+        });
+  
+        alert("Reviewer actualitzat correctament!");
+      } else {
+        // 🔹 Afegir un nou reviewer
+        await addDoc(collection(db, "Reviewers"), {
+          Name: name,
+          AvatarURL: avatarURL,
+          LastVideoIDChecked: lastVideoIDChecked,
+          Web: web,
+          ChannelID: channelID,
+        });
+  
+        alert("Reviewer afegit correctament!");
+      }
+  
+      // 🔹 Netejar el formulari i recarregar la llista
+      resetForm();
+      fetchReviewers();
+      document.getElementById("addReviewerForm").style.display = "none"; // Amagar el formulari
     } catch (error) {
-      console.error("Error afegint reviewer: ", error);
+      console.error("Error afegint/modificant reviewer: ", error);
     }
   };
 
-  // 🔹 Funció per obtenir la Channel ID automàticament
   const fetchChannelID = async () => {
     if (!web) {
       alert("Si us plau, introdueix l'URL del canal primer!");
@@ -54,13 +71,16 @@ const Reviewers = () => {
     }
 
     try {
-      // Extraiem el "username" del canal des de l'URL
+      console.log("try");
       const urlParts = web.split("/");
+      console.log(urlParts);
       const channelIdentifier = urlParts[urlParts.length - 1];
-
+      
+      console.log(channelIdentifier);
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=id&type=channel&q=${channelIdentifier}&key=${YOUTUBE_API_KEY}`
       );
+      
 
       const data = await response.json();
 
@@ -73,7 +93,7 @@ const Reviewers = () => {
     } catch (error) {
       console.error("Error obtenint la Channel ID: ", error);
     }
-  };
+  }; 
 
   const handleDeleteReviewer = async (id) => {
     try {
@@ -84,6 +104,61 @@ const Reviewers = () => {
       console.error("Error eliminant reviewer: ", error);
     }
   };
+
+  const handleEditReviewer = (reviewer) => {
+    // 🔹 Omplim els inputs amb les dades del reviewer seleccionat
+    setName(reviewer.Name);
+    setAvatarURL(reviewer.AvatarURL);
+    setLastVideoIDChecked(reviewer.LastVideoIDChecked);
+    setWeb(reviewer.Web);
+    setChannelID(reviewer.ChannelID);
+    setEditingId(reviewer.id);
+    document.getElementById("addReviewerForm").style.display = "block"; // Mostrem el formulari
+  };
+
+  const resetForm = () => {
+    setName("");
+    setAvatarURL("");
+    setLastVideoIDChecked("");
+    setWeb("");
+    setChannelID("");
+    setEditingId(null);
+  };
+
+  const fetchLatestVideo = async (reviewerId, channelId) => {
+    if (!channelId) {
+      alert("Aquest reviewer no té Channel ID definit.");
+      return;
+    }
+  
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&maxResults=1&key=${YOUTUBE_API_KEY}`
+      );
+  
+      const data = await response.json();
+  
+      if (data.items && data.items.length > 0) {
+        const latestVideoId = data.items[0].id.videoId;
+  
+        // 🔹 Actualitzem el vídeo a Firebase
+        const reviewerRef = doc(db, "Reviewers", reviewerId);
+        await updateDoc(reviewerRef, {
+          LastVideoIDChecked: latestVideoId,
+        });
+  
+        alert("Últim vídeo actualitzat correctament!");
+  
+        // 🔹 Refresquem la llista de reviewers per veure el canvi
+        fetchReviewers();
+      } else {
+        alert("No s'ha trobat cap vídeo per aquest canal.");
+      }
+    } catch (error) {
+      console.error("Error obtenint el vídeo més recent: ", error);
+    }
+  };
+  
 
   const handlePageChange = ({ selected }) => {
     setCurrentPage(selected);
@@ -99,10 +174,18 @@ const Reviewers = () => {
           <div key={reviewer.id} className="reviewer-card">
             <img src={reviewer.AvatarURL} alt={reviewer.Name} className="avatar" />
             <h3>{reviewer.Name}</h3>
-            <p>Últim Vídeo Vist: {reviewer.LastVideoIDChecked}</p>
-            <p>Channel ID: {reviewer.ChannelID || "No disponible"}</p> {/* 🔹 Mostrem la Channel ID */}
+            <p>
+              Últim Vídeo Penjat: {reviewer.LastVideoIDChecked || "No disponible"} 
+              <button onClick={() => fetchLatestVideo(reviewer.id, reviewer.ChannelID)} className="lastvideo-button">
+              🔄 Actualitzar
+              </button>
+            </p>
+            <p>Channel ID: {reviewer.ChannelID || "No disponible"}</p>
             <a href={reviewer.Web} target="_blank" rel="noopener noreferrer">Link Canal</a>
             <br />
+            <button onClick={() => handleEditReviewer(reviewer)} className="edit-button">
+              Editar
+            </button>
             <button onClick={() => handleDeleteReviewer(reviewer.id)} className="delete-button">
               Eliminar
             </button>
@@ -118,15 +201,19 @@ const Reviewers = () => {
         activeClassName={"active"}
       />
       
-      <button onClick={() => document.getElementById("addReviewerForm").style.display = "block"}>Afegir Reviewer</button>
+      <button onClick={() => document.getElementById("addReviewerForm").style.display = "block"}>
+        {editingId ? "Editar Reviewer" : "Afegir Reviewer"}
+      </button>
       <div id="addReviewerForm" style={{ display: "none", marginTop: "10px" }}>
         <input type="text" placeholder="Nom" value={name} onChange={(e) => setName(e.target.value)} /><br />
         <input type="text" placeholder="Avatar URL" value={avatarURL} onChange={(e) => setAvatarURL(e.target.value)} /><br />
-        <input type="text" placeholder="Últim Vídeo ID Revisat" value={lastVideoIDChecked} onChange={(e) => setLastVideoIDChecked(e.target.value)} /><br />
+        <input type="text" placeholder="Últim Vídeo ID Penjat" value={lastVideoIDChecked} onChange={(e) => setLastVideoIDChecked(e.target.value)} /><br />
         <input type="text" placeholder="Web (URL del canal)" value={web} onChange={(e) => setWeb(e.target.value)} /><br />
-        <button onClick={fetchChannelID}>Obtenir ID Canal</button> {/* 🔹 Botó per obtenir la Channel ID */}
-        <input type="text" placeholder="Channel ID" value={channelID} readOnly /><br />
-        <button onClick={handleAddReviewer}>Afegir</button>
+        <button onClick={fetchChannelID}>Obtenir ID Canal</button>
+        <input type="text" placeholder="Channel ID" value={channelID} /><br />
+        <button onClick={handleAddOrUpdateReviewer}>
+          {editingId ? "Guardar Canvis" : "Afegir"}
+        </button>
       </div>
     </div>
   );
