@@ -125,37 +125,46 @@ const Reviewers = () => {
     setEditingId(null);
   };
 
-  const fetchLatestVideo = async (reviewerId, channelId) => {
+  const fetchLatestVideos = async (reviewerId, channelId, startDate) => {
     if (!channelId) {
       alert("Aquest reviewer no té Channel ID definit.");
       return;
     }
   
     try {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&maxResults=1&key=${YOUTUBE_API_KEY}`
-      );
+      let videos = [];
+      let nextPageToken = "";
+      const publishedAfter = new Date(startDate).toISOString(); // Convertim la data a format ISO
   
-      const data = await response.json();
+      do {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&maxResults=50&type=video&publishedAfter=${publishedAfter}&key=${YOUTUBE_API_KEY}${nextPageToken ? `&pageToken=${nextPageToken}` : ""}`
+        );
   
-      if (data.items && data.items.length > 0) {
-        const latestVideoId = data.items[0].id.videoId;
+        const data = await response.json();
   
-        // 🔹 Actualitzem el vídeo a Firebase
-        const reviewerRef = doc(db, "Reviewers", reviewerId);
-        await updateDoc(reviewerRef, {
-          LastVideoIDChecked: latestVideoId,
-        });
+        if (data.items && data.items.length > 0) {
+          videos = [...videos, ...data.items.map((item) => item.id.videoId)];
+        }
   
-        alert("Últim vídeo actualitzat correctament!");
+        nextPageToken = data.nextPageToken;
+      } while (nextPageToken);
   
-        // 🔹 Refresquem la llista de reviewers per veure el canvi
-        fetchReviewers();
-      } else {
-        alert("No s'ha trobat cap vídeo per aquest canal.");
+      if (videos.length === 0) {
+        alert("No s'han trobat vídeos per aquest canal des de la data especificada.");
+        return;
       }
+  
+      // 🔹 Actualitzem la llista de vídeos a Firebase
+      const reviewerRef = doc(db, "Reviewers", reviewerId);
+      await updateDoc(reviewerRef, {
+        LastVideoIDChecked: videos,
+      });
+  
+      alert("Vídeos actualitzats correctament!");
+      fetchReviewers(); // 🔹 Refresquem la llista de reviewers
     } catch (error) {
-      console.error("Error obtenint el vídeo més recent: ", error);
+      console.error("Error obtenint els vídeos més recents: ", error);
     }
   };
   
@@ -176,7 +185,7 @@ const Reviewers = () => {
             <h3>{reviewer.Name}</h3>
             <p>
               Últim Vídeo Penjat: {reviewer.LastVideoIDChecked || "No disponible"} 
-              <button onClick={() => fetchLatestVideo(reviewer.id, reviewer.ChannelID)} className="lastvideo-button">
+              <button onClick={() => fetchLatestVideos(reviewer.id, reviewer.ChannelID)} className="lastvideo-button">
               🔄 Actualitzar
               </button>
             </p>
