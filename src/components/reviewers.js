@@ -125,7 +125,7 @@ const Reviewers = () => {
     setEditingId(null);
   };
 
-  const fetchLatestVideos = async (reviewerId, channelId, startDate) => {
+  const fetchLatestVideos = async (reviewerId, channelId) => {
     if (!channelId) {
       alert("Aquest reviewer no té Channel ID definit.");
       return;
@@ -134,16 +134,24 @@ const Reviewers = () => {
     try {
       let videos = [];
       let nextPageToken = "";
-      const publishedAfter = new Date(startDate).toISOString(); // Convertim la data a format ISO
+      const startDate = new Date("2025-03-10T00:00:00Z").toISOString(); // 🔹 Data fixa (hardcoded)
   
       do {
         const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&maxResults=50&type=video&publishedAfter=${publishedAfter}&key=${YOUTUBE_API_KEY}${nextPageToken ? `&pageToken=${nextPageToken}` : ""}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&maxResults=50&type=video&publishedAfter=${startDate}&key=${YOUTUBE_API_KEY}${nextPageToken ? `&pageToken=${nextPageToken}` : ""}`
         );
   
         const data = await response.json();
   
         if (data.items && data.items.length > 0) {
+          for (const item of data.items) {
+            const videoData = {
+              Title: item.snippet.title,
+              ChannelName: item.snippet.channelTitle,
+              PublishDate: item.snippet.publishedAt,
+            };
+            await addDoc(collection(db, "VideosToEdit"), videoData); // 🔹 Desa el vídeo a Firebase
+          }
           videos = [...videos, ...data.items.map((item) => item.id.videoId)];
         }
   
@@ -155,19 +163,11 @@ const Reviewers = () => {
         return;
       }
   
-      // 🔹 Actualitzem la llista de vídeos a Firebase
-      const reviewerRef = doc(db, "Reviewers", reviewerId);
-      await updateDoc(reviewerRef, {
-        LastVideoIDChecked: videos,
-      });
-  
-      alert("Vídeos actualitzats correctament!");
-      fetchReviewers(); // 🔹 Refresquem la llista de reviewers
+      alert("Vídeos desats correctament a la col·lecció VideosToEdit!");
     } catch (error) {
       console.error("Error obtenint els vídeos més recents: ", error);
     }
   };
-  
 
   const handlePageChange = ({ selected }) => {
     setCurrentPage(selected);
