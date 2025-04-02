@@ -147,9 +147,9 @@ const Reviewers = () => {
           for (const item of data.items) {
             const videoData = {
               Title: item.snippet.title,
-              ChannelName: item.snippet.channelTitle,
               PublishDate: item.snippet.publishedAt,
-              VideoID: item.id.videoId // 🔹 Nou camp afegit
+              VideoID: item.id.videoId, // 🔹 Nou camp afegit
+              ReviewerID: doc(db, "Reviewers", reviewerId) // 🔹 Referència al document del reviewer
             };
             await addDoc(collection(db, "VideosToEdit"), videoData); // 🔹 Desa el vídeo a Firebase
           }

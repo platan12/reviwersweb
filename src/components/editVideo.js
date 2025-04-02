@@ -35,9 +35,9 @@ const EditVideo = () => {
           <div>
             {currentVideo.map((VideoToEdit) => (
               <div key={VideoToEdit.id} className="reviewer-card">
-                <h3>{VideoToEdit.Title}</h3>
                 <h3>{VideoToEdit.ChannelName}</h3>
                 <h3>{VideoToEdit.PublishDate}</h3>
+                <h2>{VideoToEdit.Title}</h2>
                 <iframe 
                   width="560" 
                   height="315" 
