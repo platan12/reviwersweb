@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { YOUTUBE_API_KEY } from "../utils/apiKeys"; // 🔹 Importem la API Key
 import ReactPaginate from "react-paginate";
@@ -20,8 +20,8 @@ const EditVideo = () => {
         const querySnapshot = await getDocs(collection(db, "VideosToEdit"));
         const videosList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setVideosToEdit(videosList);
+        
       };
-
     
     const handlePageChange = ({ selected }) => {
         setCurrentPage(selected);
@@ -35,7 +35,7 @@ const EditVideo = () => {
           <div>
             {currentVideo.map((VideoToEdit) => (
               <div key={VideoToEdit.id} className="reviewer-card">
-                <h3>{VideoToEdit.ChannelName}</h3>
+                <h3>{VideoToEdit.ReviewerID.ChannelID}</h3>
                 <h3>{VideoToEdit.PublishDate}</h3>
                 <h2>{VideoToEdit.Title}</h2>
                 <iframe 

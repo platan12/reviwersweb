@@ -142,6 +142,7 @@ const Reviewers = () => {
         );
   
         const data = await response.json();
+        
   
         if (data.items && data.items.length > 0) {
           for (const item of data.items) {
@@ -149,7 +150,8 @@ const Reviewers = () => {
               Title: item.snippet.title,
               PublishDate: item.snippet.publishedAt,
               VideoID: item.id.videoId, // 🔹 Nou camp afegit
-              ReviewerID: doc(db, "Reviewers", reviewerId) // 🔹 Referència al document del reviewer
+              
+              ReviewerID: reviewerId // 🔹 Referència al document del reviewer
             };
             await addDoc(collection(db, "VideosToEdit"), videoData); // 🔹 Desa el vídeo a Firebase
           }
