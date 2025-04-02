@@ -149,6 +149,7 @@ const Reviewers = () => {
               Title: item.snippet.title,
               ChannelName: item.snippet.channelTitle,
               PublishDate: item.snippet.publishedAt,
+              VideoID: item.id.videoId // 🔹 Nou camp afegit
             };
             await addDoc(collection(db, "VideosToEdit"), videoData); // 🔹 Desa el vídeo a Firebase
           }
@@ -168,6 +169,8 @@ const Reviewers = () => {
       console.error("Error obtenint els vídeos més recents: ", error);
     }
   };
+
+  
 
   const handlePageChange = ({ selected }) => {
     setCurrentPage(selected);
