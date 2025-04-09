@@ -189,9 +189,8 @@ const Reviewers = () => {
             <img src={reviewer.AvatarURL} alt={reviewer.Name} className="avatar" />
             <h3>{reviewer.Name}</h3>
             <p>
-              Últim Vídeo Penjat: {reviewer.LastVideoIDChecked || "No disponible"} 
               <button onClick={() => fetchLatestVideos(reviewer.id, reviewer.ChannelID)} className="lastvideo-button">
-              🔄 Actualitzar
+              🔄 Cargar Videos per Editar
               </button>
             </p>
             <p>Channel ID: {reviewer.ChannelID || "No disponible"}</p>

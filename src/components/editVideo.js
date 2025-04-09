@@ -64,8 +64,10 @@ const EditVideo = () => {
           <div>
             {currentVideo.map((VideoToEdit) => (
               <div key={VideoToEdit.id} className="reviewer-card">
-                <img src={VideoToEdit.AvatarURL} alt={VideoToEdit.Name} className="avatar" />
-                <h3>{VideoToEdit.Name ? `Canal: ${VideoToEdit.Name}` : "Sense canal assignat"}</h3>
+                <p>
+                  <img src={VideoToEdit.AvatarURL} alt={VideoToEdit.Name} className="avatar" />
+                  <h3>{VideoToEdit.Name ? `Canal: ${VideoToEdit.Name}` : "Sense canal assignat"}</h3>
+                </p>
                 <h3>{VideoToEdit.PublishDate}</h3>
                 <h2>{VideoToEdit.Title}</h2>
                 <iframe 
@@ -77,7 +79,12 @@ const EditVideo = () => {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen>
                 </iframe>
+
+                
+
               </div>
+              
+              
             ))}
           </div>
           <ReactPaginate
