@@ -18,10 +18,39 @@ const EditVideo = () => {
     
       const fetchVideos = async () => {
         const querySnapshot = await getDocs(collection(db, "VideosToEdit"));
-        const videosList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setVideosToEdit(videosList);
         
-      };
+        const videosList = await Promise.all(
+            querySnapshot.docs.map(async (videoDoc) => {
+                const videoData = videoDoc.data();
+                const ReviewerId = videoData.ReviewerID;
+    
+                let Name = "";
+                let AvatarURL = "";
+              
+                // Si hi ha reviewerID, intentem recuperar el Name i URL
+                if (ReviewerId) {
+                   
+                    const reviewerRef = doc(db, "Reviewers", ReviewerId);
+                    const reviewerSnap = await getDoc(reviewerRef);
+                    if (reviewerSnap.exists()) {
+                        
+                        const reviewerData = reviewerSnap.data();
+                        Name = reviewerData.Name || "";
+                        AvatarURL = reviewerData.AvatarURL || "";
+                    }
+                }
+    
+                return {
+                    id: videoDoc.id,
+                    ...videoData,
+                    Name, // afegim al vídeo
+                    AvatarURL,
+                };
+            })
+        );
+        
+        setVideosToEdit(videosList);
+    };
     
     const handlePageChange = ({ selected }) => {
         setCurrentPage(selected);
@@ -35,7 +64,8 @@ const EditVideo = () => {
           <div>
             {currentVideo.map((VideoToEdit) => (
               <div key={VideoToEdit.id} className="reviewer-card">
-                <h3>{VideoToEdit.ReviewerID.ChannelID}</h3>
+                <img src={VideoToEdit.AvatarURL} alt={VideoToEdit.Name} className="avatar" />
+                <h3>{VideoToEdit.Name ? `Canal: ${VideoToEdit.Name}` : "Sense canal assignat"}</h3>
                 <h3>{VideoToEdit.PublishDate}</h3>
                 <h2>{VideoToEdit.Title}</h2>
                 <iframe 
