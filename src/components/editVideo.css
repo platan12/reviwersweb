@@ -2,3 +2,45 @@
 img{
     width: 100px;
 }
+.form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+  
+  .form-row label {
+    width: 120px;
+    font-weight: bold;
+  }
+  
+  .form-row input,
+  .form-row textarea {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .tabs-container {
+    margin-bottom: 10px;
+  }
+  
+  .tab {
+    margin-right: 5px;
+    padding: 6px 12px;
+    border: none;
+    background-color: #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .active-tab {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .new-tab {
+    background-color: #28a745;
+    color: white;
+  }

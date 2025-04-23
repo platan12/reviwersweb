@@ -9,6 +9,8 @@ const EditVideo = () => {
     const [VideosToEdit, setVideosToEdit] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const videosPerPage = 1;
+    const [editableVideos, setEditableVideos] = useState([]);
+    const [activeReviewIndex, setActiveReviewIndex] = useState(0);
     
     const [name, setName] = useState("");
 
@@ -50,11 +52,191 @@ const EditVideo = () => {
         );
         
         setVideosToEdit(videosList);
+        setEditableVideos(videosList); // per editar separadament sense perdre dades originals
     };
     
     const handlePageChange = ({ selected }) => {
         setCurrentPage(selected);
     };
+
+    const updateReviewField = (reviewIndex, field, value) => {
+      setEditableVideos((prev) => {
+        const newVideos = [...prev];
+        newVideos[currentPage].Reviews[reviewIndex][field] = value;
+        return newVideos;
+      });
+    };
+    
+    const updateGeoPoint = (reviewIndex, coord, value) => {
+      setEditableVideos((prev) => {
+        const newVideos = [...prev];
+        if (!newVideos[currentPage].Reviews[reviewIndex].Geopoint) {
+          newVideos[currentPage].Reviews[reviewIndex].Geopoint = { latitude: 0, longitude: 0 };
+        }
+        newVideos[currentPage].Reviews[reviewIndex].Geopoint[coord] = value;
+        return newVideos;
+      });
+    };
+
+    const handleSaveChanges = async () => {
+      const videoToUpdate = editableVideos[currentPage];
+      const videoRef = doc(db, "VideosToEdit", videoToUpdate.id);
+    
+      try {
+        await updateDoc(videoRef, {
+          Reviews: videoToUpdate.Reviews
+        });
+        alert("Canvis desats correctament!");
+      } catch (error) {
+        console.error("Error al desar:", error);
+        alert("Error al desar els canvis.");
+      }
+    };
+
+    const handleAddReview = () => {
+      setEditableVideos((prev) => {
+        const updated = [...prev];
+        const newReview = {
+          Name: "",
+          Adress: "",
+          BusinessStatus: "",
+          CoverImageURL: "",
+          Geopoint: { latitude: 0, longitude: 0 },
+          Phone: "",
+          PlaceID: "",
+          PriceLevel: "",
+          Rating: 0,
+          StartReviewAtSeconds: 0,
+          TropAdvidorURL: "",
+          UserRatingTota: 0,
+          Web: ""
+        };
+        updated[currentPage].Reviews = [
+          ...(updated[currentPage].Reviews || []),
+          newReview
+        ];
+    
+        // Estableix el nou índex actiu correctament dins la mateixa funció
+        setActiveReviewIndex(updated[currentPage].Reviews.length - 1);
+    
+        return updated;
+      });
+    };
+
+    const renderEditableFields = (review, index) => (
+      <>
+        <div className="form-row">
+            <label>Name:</label>
+            <input
+              type="text"
+              value={review.Name}
+              onChange={(e) => updateReviewField(index, "Name", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Adress:</label>
+          <input
+            type="text"
+            value={review.Adress}
+            onChange={(e) => updateReviewField(index, "Adress", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Restaurant Foto:</label>
+          <input
+            type="text"
+            value={review.CoverImageURL}
+            onChange={(e) => updateReviewField(index, "CoverImageURL", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Business Status:</label>
+          <input
+            type="text"
+            value={review.BusinessStatus}
+            onChange={(e) => updateReviewField(index, "BusinessStatus", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Phone:</label>
+          <input
+            type="text"
+            value={review.Phone}
+            onChange={(e) => updateReviewField(index, "Phone", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>PlaceID:</label>
+          <input
+            type="text"
+            value={review.PlaceID}
+            onChange={(e) => updateReviewField(index, "PlaceID", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Price Level:</label>
+          <input
+            type="text"
+            value={review.PriceLevel                          }
+            onChange={(e) => updateReviewField(index, "PriceLevel", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Rating:</label>
+          <input
+            type="text"
+            value={review.Rating}
+            onChange={(e) => updateReviewField(index, "Rating", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Total User Rating:</label>
+          <input
+            type="text"
+            value={review.UserRatingTotal}
+            onChange={(e) => updateReviewField(index, "UserRatingTotal", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Start Review At Seconds:</label>
+          <input
+            type="text"
+            value={review.StartReviewAtSeconds}
+            onChange={(e) => updateReviewField(index, "StartReviewAtSeconds", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>TropAdvidorURL:</label>
+          <input
+            type="text"
+            value={review.TropAdvidorURL}
+            onChange={(e) => updateReviewField(index, "TropAdvidorURL", e.target.value)}
+            />
+          </div>
+          <div className="form-row">
+            <label>Web:</label>
+          <input
+            type="text"
+            value={review.Web}
+            onChange={(e) => updateReviewField(index, "Web", e.target.value)}
+            />
+          </div>
+          {/* Exemples per geopunt */}
+          <input
+            type="number"
+            value={review.Geopoint?.latitude || ""}
+            onChange={(e) => updateGeoPoint(index, "latitude", parseFloat(e.target.value))}
+            placeholder="Latitud"
+          />
+          <input
+            type="number"
+            value={review.Geopoint?.longitude || ""}
+            onChange={(e) => updateGeoPoint(index, "longitude", parseFloat(e.target.value))}
+            placeholder="Longitud"
+          />
+      </>
+    );
+    
 
     const currentVideo = VideosToEdit.slice(currentPage * videosPerPage, (currentPage + 1) * videosPerPage);
 
@@ -79,8 +261,29 @@ const EditVideo = () => {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen>
                 </iframe>
+                <div className="tabs-container">
 
-                
+                {editableVideos[currentPage]?.Reviews?.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveReviewIndex(idx)}
+                    className={idx === activeReviewIndex ? "tab active-tab" : "tab"}
+                  >
+                    Resenya {idx + 1}
+                  </button>
+                ))}
+                <button onClick={handleAddReview} className="tab new-tab">+ Nova</button>
+                </div>
+
+                {editableVideos[currentPage]?.Reviews?.[activeReviewIndex] ? (
+                  <div className="review-card">
+                    {renderEditableFields(editableVideos[currentPage].Reviews[activeReviewIndex], activeReviewIndex)}
+                    <button onClick={handleSaveChanges}>Desar canvis</button>
+                  </div>
+                ) : (
+                  <p>No hi ha cap ressenya seleccionada.</p>
+                )}
+
 
               </div>
               
