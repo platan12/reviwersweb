@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, getDoc, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, getDocs, doc, deleteDoc, updateDoc, query, where, setDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { YOUTUBE_API_KEY } from "../utils/apiKeys"; // 🔹 Importem la API Key
 import ReactPaginate from "react-paginate";
@@ -96,6 +96,8 @@ const EditVideo = () => {
     const handleAddReview = () => {
       setEditableVideos((prev) => {
         const updated = [...prev];
+        const currentVideo = updated[currentPage];
+    
         const newReview = {
           Name: "",
           Adress: "",
@@ -108,20 +110,67 @@ const EditVideo = () => {
           Rating: 0,
           StartReviewAtSeconds: 0,
           TropAdvidorURL: "",
-          UserRatingTota: 0,
+          UserRatingTotal: 0,
           Web: ""
         };
-        updated[currentPage].Reviews = [
-          ...(updated[currentPage].Reviews || []),
-          newReview
-        ];
     
-        // Estableix el nou índex actiu correctament dins la mateixa funció
-        setActiveReviewIndex(updated[currentPage].Reviews.length - 1);
+        // Asegura que hi ha un array
+        if (!currentVideo.Reviews) {
+          currentVideo.Reviews = [];
+        }
+    
+        currentVideo.Reviews.push(newReview);
+    
+        // Calcula nou índex fora del setState (no dins)
+        const newReviewIndex = currentVideo.Reviews.length - 1;
+    
+        // Assigna el nou índex activament fora
+        setTimeout(() => setActiveReviewIndex(newReviewIndex), 0);
     
         return updated;
       });
     };
+    
+    const handleDumpReviews = async () => {
+      const video = editableVideos[currentPage];
+    
+      try {
+        // 1. Crear un document nou a la col·lecció "Reviews"
+        await addDoc(collection(db, "Reviews"), {
+          PublishDate: video.PublishDate,
+          ReviewerID: video.ReviewerID,
+          Title: video.Title,
+        });
+    
+        // 2. Iterar per cada review
+        for (const review of video.Reviews) {
+          const restaurantsRef = collection(db, "Restaurants");
+          const q = query(restaurantsRef, where("Name", "==", review.Name));
+          const querySnapshot = await getDocs(q);
+    
+          if (querySnapshot.empty) {
+            // No existeix => crear el document nou
+            const newDocRef = doc(collection(db, "Restaurants")); // crea amb ID aleatòria
+            await setDoc(newDocRef, {
+              ...review,
+              Reviews: [review.StartReviewAtSeconds]
+            });
+          } else {
+            // Existeix => actualitzar el document existent
+            const existingDoc = querySnapshot.docs[0];
+            await updateDoc(doc(db, "Restaurants", existingDoc.id), {
+              Reviews: arrayUnion(review.StartReviewAtSeconds)
+            });
+          }
+        }
+    
+        alert("Volcat de reviews completat!");
+      } catch (error) {
+        console.error("Error en volcar reviews:", error);
+        alert("Hi ha hagut un error durant el volcat.");
+      }
+    };
+    
 
     const renderEditableFields = (review, index) => (
       <>
@@ -279,6 +328,8 @@ const EditVideo = () => {
                   <div className="review-card">
                     {renderEditableFields(editableVideos[currentPage].Reviews[activeReviewIndex], activeReviewIndex)}
                     <button onClick={handleSaveChanges}>Desar canvis</button>
+                   
+                    <button onClick={handleDumpReviews}>Volcar Reviews</button>
                   </div>
                 ) : (
                   <p>No hi ha cap ressenya seleccionada.</p>
