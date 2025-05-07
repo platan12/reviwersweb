@@ -171,6 +171,29 @@ const EditVideo = () => {
       }
     };
     
+    const handleDeleteVideo = async () => {
+      const video = editableVideos[currentPage];
+      if (!video?.id) return;
+    
+      const confirmDelete = window.confirm("Segur que vols eliminar aquest vídeo?");
+      if (!confirmDelete) return;
+    
+      try {
+        await deleteDoc(doc(db, "VideosToEdit", video.id));
+        alert("Vídeo eliminat correctament.");
+    
+        // Actualitza l’estat per eliminar-lo de la UI
+        setEditableVideos((prev) => prev.filter((v, i) => i !== currentPage));
+    
+        // Reinicia la pàgina actual si s'ha eliminat l'últim
+        if (currentPage > 0) {
+          setCurrentPage(currentPage - 1);
+        }
+      } catch (error) {
+        console.error("Error en eliminar el vídeo:", error);
+        alert("Hi ha hagut un error en eliminar el vídeo.");
+      }
+    };
 
     const renderEditableFields = (review, index) => (
       <>
@@ -328,8 +351,12 @@ const EditVideo = () => {
                   <div className="review-card">
                     {renderEditableFields(editableVideos[currentPage].Reviews[activeReviewIndex], activeReviewIndex)}
                     <button onClick={handleSaveChanges}>Desar canvis</button>
-                   
+                
                     <button onClick={handleDumpReviews}>Volcar Reviews</button>
+
+                    <button onClick={handleDeleteVideo} style={{ backgroundColor: "red", color: "white" }}>
+                      Eliminar Vídeo
+                    </button>
                   </div>
                 ) : (
                   <p>No hi ha cap ressenya seleccionada.</p>
