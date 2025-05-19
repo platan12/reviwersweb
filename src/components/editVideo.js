@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDoc, getDocs, doc, deleteDoc, updateDoc, query, where, setDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import { YOUTUBE_API_KEY } from "../utils/apiKeys"; // 🔹 Importem la API Key
 import ReactPaginate from "react-paginate";
 import "./editVideo.css";
 
