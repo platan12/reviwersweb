@@ -220,7 +220,7 @@ const Reviewers = () => {
       <div id="addReviewerForm" style={{ display: "none", marginTop: "10px" }}>
         <input type="text" placeholder="Nom" value={name} onChange={(e) => setName(e.target.value)} /><br />
         <input type="text" placeholder="Avatar URL" value={avatarURL} onChange={(e) => setAvatarURL(e.target.value)} /><br />
-        <input type="text" placeholder="Últim Vídeo ID Penjat" value={lastVideoIDChecked} onChange={(e) => setLastVideoIDChecked(e.target.value)} /><br />
+        <input type="text" placeholder="video ID to get all videos by date" value={lastVideoIDChecked} onChange={(e) => setLastVideoIDChecked(e.target.value)} /><br />
         <input type="text" placeholder="Web (URL del canal)" value={web} onChange={(e) => setWeb(e.target.value)} /><br />
         <button onClick={fetchChannelID}>Obtenir ID Canal</button>
         <input type="text" placeholder="Channel ID" value={channelID} /><br />
