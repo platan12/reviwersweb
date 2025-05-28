@@ -194,8 +194,56 @@ const EditVideo = () => {
       }
     };
 
+    const fetchPlaceDetails = async (reviewIndex) => {
+  const placeId = editableVideos[currentPage].Reviews[reviewIndex].PlaceID;
+
+  if (!placeId) {
+    alert("Cal indicar un PlaceID abans de buscar.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/getPlaceDetails/${placeId}`);
+    const data = await response.json();
+
+    if (data.error) {
+      alert("Error obtenint dades de Google Places");
+      return;
+    }
+
+    const place = data;
+
+    setEditableVideos((prev) => {
+      const updated = [...prev];
+      const review = updated[currentPage].Reviews[reviewIndex];
+
+      review.Name = place.displayName?.text || "";
+      review.Adress = place.formattedAddress || "";
+      review.Phone = place.internationalPhoneNumber || "";
+      review.Web = place.websiteUri || "";
+      review.TropAdvidorURL = place.googleMapsUri || "";
+      review.PriceLevel = place.priceLevel?.toString() || "";
+      review.Rating = place.rating || 0;
+      review.UserRatingTotal = place.userRatingCount || 0;
+      review.BusinessStatus = place.businessStatus || "";
+      review.Geopoint = {
+        latitude: place.location?.latitude || 0,
+        longitude: place.location?.longitude || 0
+      };
+
+      return updated;
+    });
+
+  } catch (error) {
+    console.error("Error en fetchPlaceDetails:", error);
+    alert("No s'han pogut obtenir les dades del lloc.");
+  }
+};
+
+
     const renderEditableFields = (review, index) => (
       <>
+      
         <div className="form-row">
             <label>Name:</label>
             <input
@@ -243,6 +291,9 @@ const EditVideo = () => {
             value={review.PlaceID}
             onChange={(e) => updateReviewField(index, "PlaceID", e.target.value)}
             />
+            <button onClick={() => fetchPlaceDetails(index)}>
+              Omple automàticament des de Google Places
+            </button>
           </div>
           <div className="form-row">
             <label>Price Level:</label>
