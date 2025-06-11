@@ -226,10 +226,7 @@ const EditVideo = () => {
       review.Rating = place.rating || 0;
       review.UserRatingTotal = place.userRatingCount || 0;
       review.BusinessStatus = place.businessStatus || "";
-      review.Geopoint = {
-        latitude: place.location?.latitude || 0,
-        longitude: place.location?.longitude || 0
-      };
+      
 
       return updated;
     });

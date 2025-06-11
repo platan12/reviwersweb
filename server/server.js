@@ -37,8 +37,13 @@ app.post("/api/searchPlaces", async (req, res) => {
 });
 
 app.get("/api/getPlaceDetails/:placeId", async (req, res) => {
+
+  console.log("TEST!!!!!!!!")
+  
   try {
     const { placeId } = req.params;
+
+    
 
     if (!placeId) return res.status(400).json({ error: "Falta el Place ID" });
 
